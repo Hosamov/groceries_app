@@ -5,7 +5,9 @@ const express = require('express');
 const bodyParser = require('body-parser');
 const mongoose = require('mongoose');
 const { Schema } = require('mongoose');
-const session = require('express-session');
+const session = require('express-session'); // For authorizing login
+const passport = require('passport');
+const passportLocalMongoose = require('passport-local-mongoose');
 
 const app = express();
 // Initialize DB:
@@ -26,6 +28,9 @@ app.use(session({
   saveUninitialized: false
 }));
 
+app.use(passport.initialize()); // Setup Passport to start using it for authentication
+app.use(passport.session()); // Use passport to deal with sessions
+
 const UserSchema = new Schema( {
   username: { type: String, default: 'Unknown' },
   password: String,
@@ -34,8 +39,29 @@ const UserSchema = new Schema( {
   listItems: Array
 });
 
+const ItemSchema = new Schema( {
+  type: String,
+  item_name: String
+});
 
-//*  GET routes */
+// Hash & salt passwords, save users into db:
+UserSchema.plugin(passportLocalMongoose);
+
+const User = new mongoose.model('User', UserSchema, 'users');
+const Item = new mongoose.model('Item', ItemSchema, 'items');
+
+let isAnAdmin = false; // Track whether current user is an admin
+
+// use static authenticate method of model in LocalStrategy
+passport.use(User.createStrategy());
+
+// use static serialize and deserialize of model for passport session support
+passport.serializeUser(User.serializeUser());
+passport.deserializeUser(User.deserializeUser());
+
+
+//*****  GET routes *****/
+
 app.get("/", (req, res) => {
   res.send('Hello World!');
 });
