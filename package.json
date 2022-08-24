@@ -4,6 +4,7 @@
   "description": "A groceries app for adding and dtracking needed essential items",
   "main": "app.js",
   "scripts": {
+    "start": "nodemon ./app.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
