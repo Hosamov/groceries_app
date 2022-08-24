@@ -1,0 +1,18 @@
+extends layout.pug
+
+block content
+  .header-container
+    h1 User Login
+    form(action="/login" method="POST")
+      label(for="username") Username:   
+      br
+      input(type="text" name="username")
+      br
+      br
+      label(for="password") Password:  
+      br
+      input(type="password" name="password")
+      br
+      br
+      button(type="submit" class="button" name="login") Login
+      button(onclick="location.href='/'" type="button" class="button") cancel

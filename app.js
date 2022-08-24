@@ -63,7 +63,19 @@ passport.deserializeUser(User.deserializeUser());
 //*****  GET routes *****/
 
 app.get("/", (req, res) => {
-  res.send('Hello World!');
+  res.render('home');
+});
+
+app.get('/add_items', (req, res) => {
+  res.render('home');
+});
+
+app.get('/login', (req, res) => {
+  res.render('login');
+});
+
+app.get('/register', (req, res) => {
+  res.render('register');
 });
 
 

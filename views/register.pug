@@ -1,0 +1,35 @@
+extends layout.pug
+
+//- TODO: Add form validation.
+
+block content
+  .header-container
+    h1 User Registration
+    form(action="/register" method="POST")
+      label(for="username") *Username:  
+      br
+      input(type="text" name="username")
+      br
+      br
+      label(for="email") *Email:  
+      br
+      input(type="email" name="email")
+      br
+      br
+      label(for="password") *Password: 
+      br 
+      input(type="password" name="password")
+      br
+      br
+      label(for="verify_password") *Verify Password:  
+      br
+      input(type="password" name="verify_password")
+      br
+      br
+      label(for="authkey") *Auth Key:   
+      br   
+      input(type="password" name="authkey")
+      br
+      br
+      button(type="submit" class="button" name="login") Register
+      button(onclick="location.href='/'" type="button" class="button") cancel
