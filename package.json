@@ -1,0 +1,22 @@
+{
+  "name": "groceries_app",
+  "version": "1.0.0",
+  "description": "A groceries app for adding and dtracking needed essential items",
+  "main": "app.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Hosamov/groceries_app.git"
+  },
+  "author": "Matt Coale",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/Hosamov/groceries_app/issues"
+  },
+  "homepage": "https://github.com/Hosamov/groceries_app#readme",
+  "dependencies": {
+    "express": "^4.18.1"
+  }
+}
