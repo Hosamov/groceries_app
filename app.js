@@ -126,11 +126,10 @@ app.get('/admin_portal', (req, res) => {
     setTimeout(() => {
       res.render('admin_portal', { user: req.user.username, items: itemArr })
     }, 200);
+  } else {
+    // If the user isn't an admin, redirect to user_portal
+    res.redirect('/user_portal');
   }
-});
-
-app.get('/admin_portal', (req, res) => {
-  res.render('admin_portal');
 });
 
 //*****  POST routes *****/
@@ -230,6 +229,7 @@ app.post('/logout', (req, res) => {
   res.redirect('/');
 });
 
+//*****  Connection *****/
 app.listen(process.env.PORT || 3000, () => {
   console.log('Server is running on port 3000...');
 });
