@@ -59,6 +59,14 @@ passport.use(User.createStrategy());
 passport.serializeUser(User.serializeUser());
 passport.deserializeUser(User.deserializeUser());
 
+// Function to redirect to appropriate user portal based on user level:
+function redirect(res) {
+  if(isAnAdmin) {
+    res.redirect('/admin_portal');
+  } else {
+    res.redirect('/user_portal');
+  }
+}
 
 //*****  GET routes *****/
 
@@ -76,6 +84,53 @@ app.get('/login', (req, res) => {
 
 app.get('/register', (req, res) => {
   res.render('register');
+});
+
+app.get('/user_portal', (req, res) => {
+  res.render('user_portal');
+})
+
+app.get('/admin_portal', (req, res) => {
+  res.render('admin_portal');
+})
+
+
+//*****  POST routes *****/
+app.post('/register', (req, res) => {
+  const username = req.body.username;
+  const email = req.body.email;
+  const password = req.body.password;
+  const authKey = req.body.authkey;
+  let isAnAdmin = (authKey === process.env.ADMINAUTHKEY) ? true : false;
+
+  if((req.body.authkey === process.env.AUTHKEY || req.body.authkey === process.env.ADMINAUTHKEY) && req.body.password === req.body.verify_password) {
+     // Use register() method from passport-local-mongoose:
+    User.register({username: username}, password, (err, user) => {
+      if(err) {
+        console.log(err);
+        res.redirect('/register');
+      } else {
+        passport.authenticate('local')(req, res, () => {
+          console.log('Registration successful.');
+          User.findOne({username: username}, (err, foundUser) => {
+            if(err) {
+              console.log(err)
+            } else {
+              foundUser.email = email;
+              foundUser.isAdmin = isAnAdmin;
+              foundUser.save(() => {
+                console.log('New user has been registered...');
+                redirect(res);
+              });
+            }   
+          })
+        });
+      }
+    }); 
+  } else {
+    console.log('Registration failed.');
+    res.redirect('/register');
+  }
 });
 
 

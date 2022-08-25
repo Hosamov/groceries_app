@@ -1,0 +1,25 @@
+extends layout.pug
+
+block content   
+  .header-container
+    h1 USER PAGE
+    h1 USER PORTAL
+    h1 Hi, #{user}
+    h2 Please complete the following task:
+    br
+    br
+
+    h3 Action:
+    ul
+      li.action=actions
+      br
+
+    h3 Object:
+    ul 
+      li.thing=things
+      br
+        
+    form(action="/logout" method="GET")
+      button(onclick="location.href='/get_random_task'" type="button" class="button" id="random_task_btn") Random Task
+      //- button(onclick="location.href='/set_current_task'" type="button" class="button" id="current_task_btn") Get New Task
+      button(type="submit" class="button" name="logout") Logout
