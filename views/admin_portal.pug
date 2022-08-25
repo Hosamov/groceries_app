@@ -4,35 +4,10 @@ block content
   .header-container
     h1 ADMIN PAGE
     h1 Random Actions Data
-    button(onclick="location.href='/submit_action'" type="button" class="button") Create Action
-    button(onclick="location.href='/submit_thing'" type="button" class="button") Create Object
-
-    h2 Actions
-    ul
-      if(actions.length > 0)
-        each action in actions
-          li.action=action.action
-            = " "    
-            a(class="link" href='/delete_action/' + action._id)
-              <i class="fa-solid fa-trash"></i>
-      else 
-        li No actions found.
-
-    h2 Objects
-    ul
-      if(things.length > 0)   
-        each thing in things
-          li.object=thing.thing
-            = " "    
-            a(class="link" href='/delete_thing/' + thing._id)
-              <i class="fa-solid fa-trash"></i>
-      else
-        li No objects found.
-    br
     
     form(action="/logout" method="GET")
-      button(onclick="location.href='/submit_action'" type="button" class="button") Create Action
-      button(onclick="location.href='/submit_thing'" type="button" class="button") Create Object
+      button(onclick="location.href='/submit_action'" type="button" class="button") Some button
+      button(onclick="location.href='/submit_thing'" type="button" class="button") Some button
       br
       button(type="submit" class="button" name="logout") Logout
       
