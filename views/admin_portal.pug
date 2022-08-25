@@ -3,11 +3,13 @@ extends layout.pug
 block content   
   .header-container
     h1 ADMIN PAGE
-    h1 Random Actions Data
+    h2 Hello, #{user}!
     
     form(action="/logout" method="GET")
       button(onclick="location.href='/submit_action'" type="button" class="button") Some button
       button(onclick="location.href='/submit_thing'" type="button" class="button") Some button
       br
+      br
+    form(action="/logout" method="POST")
       button(type="submit" class="button" name="logout") Logout
       

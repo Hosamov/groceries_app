@@ -1,3 +1,5 @@
+//jshint esversion:6
+"use strict";
 
 require('dotenv').config()
 
@@ -11,7 +13,10 @@ const passportLocalMongoose = require('passport-local-mongoose');
 
 const app = express();
 // Initialize DB:
-require('./initDB')(); 
+// require('./initDB')(); 
+
+// Connect to local db:
+mongoose.connect('mongodb://localhost:27017/groceriesDB', {useNewUrlParser: true, useUnifiedTopology: true});
 
 app.set('view engine', 'pug');
 
@@ -87,13 +92,46 @@ app.get('/register', (req, res) => {
 });
 
 app.get('/user_portal', (req, res) => {
-  res.render('user_portal');
-})
+
+  if (req.isAuthenticated()) {
+    User.find({'username': {$eq: req.user.username}}, (err, foundData) => {
+      if(!err) {
+       console.log('Success!');
+      } else {
+        console.log(err);
+      }
+    });
+    // Make sure the data has been retrieved, render user-portal:
+    setTimeout(() => {
+      res.render('user_portal', {user: req.user.username});
+    }, 200);  
+  } else {
+    res.redirect('/login');
+  }
+});
+
+app.get('/admin_portal', (req, res) => {
+  const itemArr = [];
+  if (req.isAuthenticated() && isAnAdmin) {
+    Item.find({'_id':{$ne: null}}, (err, foundItems) => {
+      if(!err) {
+        foundItems.forEach(item => 
+          itemArr.push(item));
+        console.log('Success!');
+      } else {
+        console.log(err);
+      }
+    }); 
+    // Make sure the data has been retrieved, render user-portal:
+    setTimeout(() => {
+      res.render('admin_portal', { user: req.user.username, items: itemArr })
+    }, 200);
+  }
+});
 
 app.get('/admin_portal', (req, res) => {
   res.render('admin_portal');
-})
-
+});
 
 //*****  POST routes *****/
 app.post('/register', (req, res) => {
@@ -103,8 +141,9 @@ app.post('/register', (req, res) => {
   const authKey = req.body.authkey;
   let isAnAdmin = (authKey === process.env.ADMINAUTHKEY) ? true : false;
 
-  if((req.body.authkey === process.env.AUTHKEY || req.body.authkey === process.env.ADMINAUTHKEY) && req.body.password === req.body.verify_password) {
-     // Use register() method from passport-local-mongoose:
+  if((req.body.authkey === process.env.AUTHKEY || req.body.authkey === process.env.ADMINAUTHKEY) 
+     && req.body.password === req.body.verify_password) {
+    // Use register() method from passport-local-mongoose:
     User.register({username: username}, password, (err, user) => {
       if(err) {
         console.log(err);
@@ -133,7 +172,63 @@ app.post('/register', (req, res) => {
   }
 });
 
+// /login Post route:
+app.post('/login', (req, res) => {
+  const user = new User({
+    username: req.body.username,
+    password: req.body.password,
+  });
 
+  const thisUser = user.username;
+
+  User.findOne({username: thisUser}, (err, foundUser) => {
+    if(err) {
+      console.log(err);
+    } else {
+      if(foundUser) {
+        if(foundUser.isAdmin) {
+          isAnAdmin = true;
+        } else {
+          isAnAdmin = false;
+        }
+      } else {
+        console.log('User does not exist or incorrect credentials were provided.');
+        res.redirect('/login');
+      }
+      
+    }
+  });
+
+  setTimeout(() => {
+    req.login(user, (err) => {
+      if(err) {
+        console.log(err);
+      } else {
+        if(isAnAdmin) {
+          passport.authenticate("local")(req, res, () => {
+            res.redirect('/admin_portal');
+          });
+        } else {
+          passport.authenticate("local")(req, res, () => {
+            res.redirect('/user_portal');
+          });
+        }
+      }
+    });
+  }, 100);
+});
+
+// /logout POST route
+app.post('/logout', (req, res) => {
+  req.logout((err) => { //passport.js method
+    if(err) { 
+      return next(err); 
+    } else {
+      console.log('Logout Successful!');
+    }
+  }); 
+  res.redirect('/');
+});
 
 app.listen(process.env.PORT || 3000, () => {
   console.log('Server is running on port 3000...');
