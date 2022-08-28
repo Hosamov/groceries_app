@@ -12,7 +12,7 @@ Meat, or Household.
 - Prior to each shopping trip, users may select, by clicking the individual items 
 they want added to their shopping list. 
 - Once items are selected, users may either save or print the items desired for
-the next shopping trip, containing checkboxes to indicate the item was added to
+the next shopping trip, containing checkboxes for indicating the item was added to
 cart/purchased.
 
 ## Routes

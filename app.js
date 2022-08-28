@@ -36,17 +36,22 @@ app.use(session({
 app.use(passport.initialize()); // Setup Passport to start using it for authentication
 app.use(passport.session()); // Use passport to deal with sessions
 
+const ItemSchema = new Schema( {
+  item_name: String,
+  item_type: String
+});
+
+const TypeSchema = new Schema( {
+  item_type: String,
+});
+
 const UserSchema = new Schema( {
   username: { type: String, default: 'Unknown' },
   password: String,
   email: String,
   isAdmin: Boolean,
-  listItems: Array
-});
-
-const ItemSchema = new Schema( {
-  type: String,
-  item_name: String
+  listItems: ItemSchema, // TODO: Test this https://mongoosejs.com/docs/schematypes.html#schemas
+  list: Array
 });
 
 // Hash & salt passwords, save users into db:
@@ -54,13 +59,14 @@ UserSchema.plugin(passportLocalMongoose);
 
 const User = new mongoose.model('User', UserSchema, 'users');
 const Item = new mongoose.model('Item', ItemSchema, 'items');
+const Type = new mongoose.model('Type', TypeSchema, 'types');
 
 let isAnAdmin = false; // Track whether current user is an admin
 
-// use static authenticate method of model in LocalStrategy
+// Use static authenticate method of model in LocalStrategy
 passport.use(User.createStrategy());
 
-// use static serialize and deserialize of model for passport session support
+// Use static serialize and deserialize of model for passport session support
 passport.serializeUser(User.serializeUser());
 passport.deserializeUser(User.deserializeUser());
 
@@ -72,7 +78,6 @@ function redirect(res) {
     res.redirect('/user_portal');
   }
 }
-
 
 //*****  GET routes *****/
 
@@ -229,6 +234,33 @@ app.post('/logout', (req, res) => {
   }); 
   res.redirect('/');
 });
+
+// Route: /submit_action POST route:
+app.post('/submit_action', async (req, res) => {
+  // const userName = req.user.username;
+  // const userInfo = req.body.info;
+  // const otherUserInfo = req.body.otherInfo;
+  // const userQty = req.body.qty;
+  // const userDate = req.body.date;
+
+  // Capture collected data, save to db:
+  await Item.create([{ item_name: 'test-item', item_type: 'test-type' }]);
+  res.redirect('/admin_portal');
+});
+
+// Route: /submit_type POST route:
+app.post('/submit_type', async (req, res) => {
+  // const userName = req.user.username;
+  // const userInfo = req.body.info;
+  // const otherUserInfo = req.body.otherInfo;
+  // const userQty = req.body.qty;
+  // const userDate = req.body.date;
+
+  // Capture collected data, save to db:
+  await Type.create([{ item_type: 'test-type' }]);
+  res.redirect('/admin_portal');
+});
+
 
 
 //***** Connection *****/

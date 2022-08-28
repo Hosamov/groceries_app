@@ -5,9 +5,10 @@ block content
     h1 ADMIN PAGE
     h2 Hello, #{user}!
     
-    form(action="/logout" method="GET")
-      button(onclick="location.href='/submit_action'" type="button" class="button") Some button
-      button(onclick="location.href='/submit_thing'" type="button" class="button") Some button
+    form(action="/submit_action" method="POST")
+      button(type="submit" class="button" name="submit") Add item
+    form(action="/submit_type" method="POST")
+      button(type="submit" class="button" name="submit") Add type
       br
       br
     form(action="/logout" method="POST")
