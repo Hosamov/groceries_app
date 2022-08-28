@@ -5,5 +5,5 @@ A grocery list app for adding and tracking needed essentials
 
 ## Routes
 - /user_portal
- - Test
+  - Test
 - /admin_portal
