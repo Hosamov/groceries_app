@@ -73,6 +73,7 @@ function redirect(res) {
   }
 }
 
+
 //*****  GET routes *****/
 
 app.get("/", (req, res) => {
@@ -131,6 +132,7 @@ app.get('/admin_portal', (req, res) => {
     res.redirect('/user_portal');
   }
 });
+
 
 //*****  POST routes *****/
 app.post('/register', (req, res) => {
@@ -193,8 +195,7 @@ app.post('/login', (req, res) => {
       } else {
         console.log('User does not exist or incorrect credentials were provided.');
         res.redirect('/login');
-      }
-      
+      }   
     }
   });
 
@@ -229,7 +230,8 @@ app.post('/logout', (req, res) => {
   res.redirect('/');
 });
 
-//*****  Connection *****/
+
+//***** Connection *****/
 app.listen(process.env.PORT || 3000, () => {
   console.log('Server is running on port 3000...');
 });
