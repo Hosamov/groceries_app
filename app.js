@@ -235,13 +235,9 @@ app.post('/logout', (req, res) => {
   res.redirect('/');
 });
 
+// Methods for testing the Item and Type collections
 // Route: /submit_action POST route:
 app.post('/submit_action', async (req, res) => {
-  // const userName = req.user.username;
-  // const userInfo = req.body.info;
-  // const otherUserInfo = req.body.otherInfo;
-  // const userQty = req.body.qty;
-  // const userDate = req.body.date;
 
   // Capture collected data, save to db:
   await Item.create([{ item_name: 'test-item', item_type: 'test-type' }]);
@@ -250,11 +246,6 @@ app.post('/submit_action', async (req, res) => {
 
 // Route: /submit_type POST route:
 app.post('/submit_type', async (req, res) => {
-  // const userName = req.user.username;
-  // const userInfo = req.body.info;
-  // const otherUserInfo = req.body.otherInfo;
-  // const userQty = req.body.qty;
-  // const userDate = req.body.date;
 
   // Capture collected data, save to db:
   await Type.create([{ item_type: 'test-type' }]);
