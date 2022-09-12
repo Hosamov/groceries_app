@@ -13,10 +13,10 @@ const passportLocalMongoose = require('passport-local-mongoose');
 
 const app = express();
 // Initialize DB: (TODO: Reenable line below when it goes live)
-// require('./initDB')(); 
+require('./initDB')(); 
 
 // Connect to local db: (TODO: Delete line below when it goes live)
-mongoose.connect('mongodb://localhost:27017/groceriesDB', {useNewUrlParser: true, useUnifiedTopology: true});
+// mongoose.connect('mongodb://localhost:27017/groceriesDB', {useNewUrlParser: true, useUnifiedTopology: true});
 
 app.set('view engine', 'pug');
 
