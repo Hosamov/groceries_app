@@ -1,29 +1,32 @@
-//jshint esversion:6
-"use strict";
+const express = require('express');
+const bodyParser = require('body-parser');
+const passport = require('passport');
+const LocalStrategy = require('passport-local');
+const session = require('express-session');
+const memoryStore = require('memorystore')(session); // used with express-session(?)
 
 require('dotenv').config()
 
-const express = require('express');
-const bodyParser = require('body-parser');
-const mongoose = require('mongoose');
-const { Schema } = require('mongoose');
-const session = require('express-session'); // For authorizing login
-const passport = require('passport');
-const passportLocalMongoose = require('passport-local-mongoose');
+// Passport Config
+const Account = require('./models/account');
+const { MemoryStore } = require('express-session'); 
+passport.use(new LocalStrategy(Account.authenticate()));
+passport.serializeUser(Account.serializeUser());
+passport.deserializeUser(Account.deserializeUser());
 
-const app = express();
-// Initialize DB: (TODO: Reenable line below when it goes live)
+// Initialize DB: 
 require('./initDB')(); 
 
-// Connect to local db: (TODO: Delete line below when it goes live)
-// mongoose.connect('mongodb://localhost:27017/groceriesDB', {useNewUrlParser: true, useUnifiedTopology: true});
+const app = express();
+
+//* Routes:
+const loginRoute = require('./routes/auth/login.js');
+const registerRoute = require('./routes/auth/register.js');
+const unauthorizedRoute = require('./routes/auth/unauthorized.js');
+const homeRoute = require('./routes/home.js');
+//*
 
 app.set('view engine', 'pug');
-
-app.use('/static', express.static('public'));
-app.use(bodyParser.urlencoded({
-  extended: true
-}));
 
 app.use(express.static("public"));
 
@@ -33,228 +36,67 @@ app.use(session({
   saveUninitialized: false
 }));
 
-app.use(passport.initialize()); // Setup Passport to start using it for authentication
-app.use(passport.session()); // Use passport to deal with sessions
+app.use(bodyParser.urlencoded({ extended: true }));
+app.use('/static', express.static('public'));
+app.use(
+  session({          
+    cookie: {maxAge: 3600000}, // Expire after 1 hour
+    store: new MemoryStore({
+      checkPeriod: 86400000 // prune expired entries every 24h
+    }),
+    secret: process.env.SESSION_SECRET,
+    resave: false,
+    saveUninitialized: false,
+  })
+);
+app.use(passport.initialize());
+app.use(passport.session());
 
-const ItemSchema = new Schema( {
-  item_name: String,
-  item_type: String
-});
+//* Filter routes path:
 
-const TypeSchema = new Schema( {
-  item_type: String,
-});
+//*
 
-const UserSchema = new Schema( {
-  username: { type: String, default: 'Unknown' },
-  password: String,
-  email: String,
-  isAdmin: Boolean,
-  listItems: ItemSchema, // TODO: Test this https://mongoosejs.com/docs/schematypes.html#schemas
-  list: Array
-});
+//* Routes
+require('./routes')(app);
 
-// Hash & salt passwords, save users into db:
-UserSchema.plugin(passportLocalMongoose);
-
-const User = new mongoose.model('User', UserSchema, 'users');
-const Item = new mongoose.model('Item', ItemSchema, 'items');
-const Type = new mongoose.model('Type', TypeSchema, 'types');
-
-let isAnAdmin = false; // Track whether current user is an admin
-
-// Use static authenticate method of model in LocalStrategy
-passport.use(User.createStrategy());
-
-// Use static serialize and deserialize of model for passport session support
-passport.serializeUser(User.serializeUser());
-passport.deserializeUser(User.deserializeUser());
-
-// Function to redirect to appropriate user portal based on user level:
-function redirect(res) {
-  if(isAnAdmin) {
-    res.redirect('/admin_portal');
-  } else {
-    res.redirect('/user_portal');
-  }
-}
-
-//*****  GET routes *****/
-
-app.get("/", (req, res) => {
+//* Root(/) GET route
+app.get('/', (req, res, next) => {
   res.render('home');
 });
 
-app.get('/add_items', (req, res) => {
-  res.render('home');
+//******* ERROR HANDLERS *******//
+
+//* 404 error handler
+app.use((req, res, next) => {
+  //Create a new the error class object
+  const err = new Error();
+  err.message = `It appears the page you requested doesn't exist.`;
+  err.status = 404;
+
+  // Log out the error code, and stack to the console, including message
+  console.log('Error status code: ' + err.status);
+  console.log(err.stack);
+
+  // Render the page-not-found template
+  res.status(404).render('./errors/page-not-found'); //display a generic 404 page without error stack
 });
 
-app.get('/login', (req, res) => {
-  res.render('login');
-});
-
-app.get('/register', (req, res) => {
-  res.render('register');
-});
-
-app.get('/user_portal', (req, res) => {
-
-  if (req.isAuthenticated()) {
-    User.find({'username': {$eq: req.user.username}}, (err, foundData) => {
-      if(!err) {
-       console.log('Success!');
-      } else {
-        console.log(err);
-      }
-    });
-    // Make sure the data has been retrieved, render user-portal:
-    setTimeout(() => {
-      res.render('user_portal', {user: req.user.username});
-    }, 200);  
-  } else {
-    res.redirect('/login');
-  }
-});
-
-app.get('/admin_portal', (req, res) => {
-  const itemArr = [];
-  if (req.isAuthenticated() && isAnAdmin) {
-    Item.find({'_id':{$ne: null}}, (err, foundItems) => {
-      if(!err) {
-        foundItems.forEach(item => 
-          itemArr.push(item));
-        console.log('Success!');
-      } else {
-        console.log(err);
-      }
-    }); 
-    // Make sure the data has been retrieved, render user-portal:
-    setTimeout(() => {
-      res.render('admin_portal', { user: req.user.username, items: itemArr })
-    }, 200);
-  } else {
-    // If the user isn't an admin, redirect to user_portal
-    res.redirect('/user_portal');
-  }
-});
-
-
-//*****  POST routes *****/
-app.post('/register', (req, res) => {
-  const username = req.body.username;
-  const email = req.body.email;
-  const password = req.body.password;
-  const authKey = req.body.authkey;
-  let isAnAdmin = (authKey === process.env.ADMINAUTHKEY) ? true : false;
-
-  if((req.body.authkey === process.env.AUTHKEY || req.body.authkey === process.env.ADMINAUTHKEY) 
-     && req.body.password === req.body.verify_password) {
-    // Use register() method from passport-local-mongoose:
-    User.register({username: username}, password, (err, user) => {
-      if(err) {
-        console.log(err);
-        res.redirect('/register');
-      } else {
-        passport.authenticate('local')(req, res, () => {
-          console.log('Registration successful.');
-          User.findOne({username: username}, (err, foundUser) => {
-            if(err) {
-              console.log(err)
-            } else {
-              foundUser.email = email;
-              foundUser.isAdmin = isAnAdmin;
-              foundUser.save(() => {
-                console.log('New user has been registered...');
-                redirect(res);
-              });
-            }   
-          })
-        });
-      }
-    }); 
-  } else {
-    console.log('Registration failed.');
-    res.redirect('/register');
-  }
-});
-
-// /login Post route:
-app.post('/login', (req, res) => {
-  const user = new User({
-    username: req.body.username,
-    password: req.body.password,
-  });
-
-  const thisUser = user.username;
-
-  User.findOne({username: thisUser}, (err, foundUser) => {
-    if(err) {
+//* Global error handler
+app.use((err, req, res, next) => {
+  if (err) {
+    if (err.status === 404) {
+      res.status(404).render('./errors/page-not-found', { err }); //render the error status with the error 
       console.log(err);
     } else {
-      if(foundUser) {
-        if(foundUser.isAdmin) {
-          isAnAdmin = true;
-        } else {
-          isAnAdmin = false;
-        }
-      } else {
-        console.log('User does not exist or incorrect credentials were provided.');
-        res.redirect('/login');
-      }   
+      err.message = err.message; //|| "Oops, it looks like something went wrong on the server...";
+      res.status(err.status || 500).render('./errors/error', { err }); //display the error status and render the error template w/ error message/object
+      console.log('Error status code: ' + err.status);
+      console.log(err.stack);
     }
-  });
-
-  setTimeout(() => {
-    req.login(user, (err) => {
-      if(err) {
-        console.log(err);
-      } else {
-        if(isAnAdmin) {
-          passport.authenticate("local")(req, res, () => {
-            res.redirect('/admin_portal');
-          });
-        } else {
-          passport.authenticate("local")(req, res, () => {
-            res.redirect('/user_portal');
-          });
-        }
-      }
-    });
-  }, 100);
+  }
 });
 
-// /logout POST route
-app.post('/logout', (req, res) => {
-  req.logout((err) => { //passport.js method
-    if(err) { 
-      return next(err); 
-    } else {
-      console.log('Logout Successful!');
-    }
-  }); 
-  res.redirect('/');
-});
-
-// Methods for testing the Item and Type collections
-// Route: /submit_action POST route:
-app.post('/submit_action', async (req, res) => {
-
-  // Capture collected data, save to db:
-  await Item.create([{ item_name: 'test-item', item_type: 'test-type' }]);
-  res.redirect('/admin_portal');
-});
-
-// Route: /submit_type POST route:
-app.post('/submit_type', async (req, res) => {
-
-  // Capture collected data, save to db:
-  await Type.create([{ item_type: 'test-type' }]);
-  res.redirect('/admin_portal');
-});
-
-
-
-//***** Connection *****/
+//* Server
 app.listen(process.env.PORT || 3000, () => {
-  console.log('Server is running on port 3000...');
+  console.log('Listening on port 3000...');
 });
