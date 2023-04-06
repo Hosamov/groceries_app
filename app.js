@@ -30,12 +30,6 @@ app.set('view engine', 'pug');
 
 app.use(express.static("public"));
 
-app.use(session({
-  secret: process.env.SECRET,
-  resave: false,
-  saveUninitialized: false
-}));
-
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use('/static', express.static('public'));
 app.use(
@@ -53,7 +47,7 @@ app.use(passport.initialize());
 app.use(passport.session());
 
 //* Filter routes path:
-
+app.use('/', homeRoute); //* /home GET routes
 //*
 
 //* Routes
